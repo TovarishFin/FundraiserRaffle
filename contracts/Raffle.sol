@@ -4,11 +4,6 @@ import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./OraclizeAPI.sol";
 
-/*
-  what do we need to do here?
-  need to keep list of contributors
-  need to select one at the end who will get winnings
-*/
 
 contract Raffle is Ownable, usingOraclize {
   using SafeMath for uint256;
@@ -59,6 +54,20 @@ contract Raffle is Ownable, usingOraclize {
     fundraiserGoal = _fundraiserGoal;
   }
 
+  function enterStage(Stages _stage)
+    private
+  {
+    stage = _stage;
+  }
+
+  // do not allow anyone to send money to this contract without donate()
+  function()
+    public
+    payable
+  {
+    revert();
+  }
+
   function startRaffle()
     external
     onlyOwner
@@ -67,12 +76,6 @@ contract Raffle is Ownable, usingOraclize {
   {
     enterStage(Stages.Active);
     return true;
-  }
-
-  function enterStage(Stages _stage)
-    private
-  {
-    stage = _stage;
   }
 
   function donate()
@@ -86,9 +89,31 @@ contract Raffle is Ownable, usingOraclize {
     winnableAmount = winnableAmount.add(winningsIncrement);
     fundraisedAmount = msg.value.sub(winnableAmount);
     Donation(msg.sender, msg.value);
-    if(fundraisedAmount.add(winnableAmount) > fundraiserGoal) {
+    if (fundraisedAmount.add(winnableAmount) > fundraiserGoal) {
       enterStage(Stages.Complete);
     }
+  }
+
+  function claimWinnings()
+    external
+    atStage(Stages.Finished)
+    returns (bool)
+  {
+    require(donors[randomWinner] == msg.sender);
+    msg.sender.transfer(winnableAmount);
+    WinnerClaimed(msg.sender, winnableAmount);
+    return true;
+  }
+
+  function claimFundraisedAmount()
+    external
+    onlyOwner
+    atStage(Stages.Finished)
+    returns (bool)
+  {
+    owner.transfer(fundraisedAmount);
+    FundraiserClaimed(owner, fundraisedAmount);
+    return true;
   }
 
   // callback function used to get random winner (uses oraclize)
@@ -99,7 +124,7 @@ contract Raffle is Ownable, usingOraclize {
     require(msg.sender == oraclize_cbAddress());
 
     // if 0 proof, verification failed...
-    if(oraclize_randomDS_proofVerify__returnCode(
+    if (oraclize_randomDS_proofVerify__returnCode(
       _queryId,
       _result,
       _proof) != 0
@@ -132,35 +157,5 @@ contract Raffle is Ownable, usingOraclize {
       _callbackGas
     );
     return true;
-  }
-
-  function claimWinnings()
-    external
-    atStage(Stages.Finished)
-    returns (bool)
-  {
-    require(donors[randomWinner] == msg.sender);
-    msg.sender.transfer(winnableAmount);
-    WinnerClaimed(msg.sender, winnableAmount);
-    return true;
-  }
-
-  function claimFundraisedAmount()
-    external
-    onlyOwner
-    atStage(Stages.Finished)
-    returns (bool)
-  {
-    owner.transfer(fundraisedAmount);
-    FundraiserClaimed(owner, fundraisedAmount);
-    return true;
-  }
-
-  // do not allow anyone to send money to this contract without donate()
-  function()
-    external
-    payable
-  {
-    revert();
   }
 }

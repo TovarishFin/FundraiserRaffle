@@ -44,11 +44,13 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     uint256 fundraisedAmount
   );
 
+  // only allow certain functions to run at certain stages
   modifier atStage(Stages _stage) {
     require(stage == _stage);
     _;
   }
 
+  // check if fundraising has ended, if so move to next Complete
   modifier checkComplete() {
     if (
       stage == Stages.Active
@@ -62,13 +64,14 @@ contract FundraiserRaffle is Ownable, usingOraclize {
   // owner starts as msg.sender
   // ownership is transferred over to fundraiserAddress when startRaffle() called
   function FundraiserRaffle(
-    address _fundraiserAddress,
-    uint256 _endDate
+    uint256 _endDate,
+    address _fundraiserAddress
   )
     public
   {
     require(block.timestamp > endDate);
     require(_fundraiserAddress != address(0));
+    require(msg.sender != _fundraiserAddress);
     fundraiserAddress = _fundraiserAddress;
     endDate = _endDate;
   }
@@ -94,6 +97,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     return true;
   }
 
+  // only way to donate is through this function... fallback will not accept funds
   function donate()
     external
     payable
@@ -104,10 +108,11 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     donors.push(msg.sender);
     uint256 winningsIncrement = msg.value.div(2);
     winnableAmount = winnableAmount.add(winningsIncrement);
-    fundraisedAmount = fundraisedAmount.sub(msg.value.sub(winnableAmount));
+    fundraisedAmount = fundraisedAmount.add(msg.value.sub(winningsIncrement));
     Donation(msg.sender, msg.value);
   }
 
+  // winner can claim using this after fundraising has ended
   function claimWinnings()
     external
     atStage(Stages.Finished)
@@ -119,6 +124,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     return true;
   }
 
+  // fundraiser can claim funds here after fundraising has ended
   function claimFundraisedAmount()
     external
     onlyOwner
@@ -146,7 +152,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
       revert();
     } else {
       enterStage(Stages.Finished);
-      uint256 _maxRange = donors.length;
+      uint256 _maxRange = donors.length - 1;
       winner = uint(keccak256(_result)) % _maxRange;
       WinnerPicked(donors[winner], winnableAmount);
     }
@@ -154,6 +160,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
 
   // used only after fundraiser complete, anyone can call
   // caller needs to pay for gas costs of generating random number
+  // the result is sent to __callback
   function generateRandomNum()
     public
     payable
@@ -174,6 +181,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     return true;
   }
 
+  // move fundraising on to next stage
   function enterStage(Stages _stage)
     private
   {

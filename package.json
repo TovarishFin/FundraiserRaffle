@@ -52,6 +52,7 @@
     "test:contracts": "yarn run clean:contracts && truffle test",
     "lint:contracts": "solium -d ./contracts/",
     "lint:js": "yarn eslint ./src ./test",
-    "start:blockchain": "yarn ganache-cli -t 100 -b 15 -d -m 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'"
+    "start:blockchain": "yarn ganache-cli -p 9545 -t 100 -b 15 -d -m 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'",
+    "start:eth-bridge": "node node_modules/ethereum-bridge"
   }
 }

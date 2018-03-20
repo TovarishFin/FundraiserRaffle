@@ -9,8 +9,9 @@ contract FundraiserRaffle is Ownable, usingOraclize {
   using SafeMath for uint256;
   uint256 public fundraisedAmount = 0;
   uint256 public winnableAmount = 0;
-  uint256 public fundraiserGoal;
-  uint256 public randomWinner;
+  uint256 public winner;
+  uint256 public endDate;
+  address public fundraiserAddress;
 
   address[] public donors;
 
@@ -48,10 +49,28 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     _;
   }
 
-  function FundraiserRaffle(uint256 _fundraiserGoal)
+  modifier checkComplete() {
+    if (
+      stage == Stages.Active
+      && block.timestamp > endDate
+    ) {
+      enterStage(Stages.Complete);
+    }
+    _;
+  }
+
+  // owner starts as msg.sender
+  // ownership is transferred over to fundraiserAddress when startRaffle() called
+  function FundraiserRaffle(
+    address _fundraiserAddress,
+    uint256 _endDate
+  )
     public
   {
-    fundraiserGoal = _fundraiserGoal;
+    require(block.timestamp > endDate);
+    require(_fundraiserAddress != address(0));
+    fundraiserAddress = _fundraiserAddress;
+    endDate = _endDate;
   }
 
   // do not allow anyone to send money to this contract without donate()
@@ -62,6 +81,8 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     revert();
   }
 
+  // allows raffle to start
+  // transfers ownership to fundraiser to allow claiming funds when finished
   function startRaffle()
     external
     onlyOwner
@@ -69,23 +90,22 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     returns (bool)
   {
     enterStage(Stages.Active);
+    transferOwnership(fundraiserAddress);
     return true;
   }
 
   function donate()
     external
     payable
+    checkComplete
     atStage(Stages.Active)
     returns (bool)
   {
     donors.push(msg.sender);
     uint256 winningsIncrement = msg.value.div(2);
     winnableAmount = winnableAmount.add(winningsIncrement);
-    fundraisedAmount = msg.value.sub(winnableAmount);
+    fundraisedAmount = fundraisedAmount.sub(msg.value.sub(winnableAmount));
     Donation(msg.sender, msg.value);
-    if (fundraisedAmount.add(winnableAmount) > fundraiserGoal) {
-      enterStage(Stages.Complete);
-    }
   }
 
   function claimWinnings()
@@ -93,7 +113,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     atStage(Stages.Finished)
     returns (bool)
   {
-    require(donors[randomWinner] == msg.sender);
+    require(donors[winner] == msg.sender);
     msg.sender.transfer(winnableAmount);
     WinnerClaimed(msg.sender, winnableAmount);
     return true;
@@ -127,8 +147,8 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     } else {
       enterStage(Stages.Finished);
       uint256 _maxRange = donors.length;
-      randomWinner = uint(keccak256(_result)) % _maxRange;
-      WinnerPicked(donors[randomWinner], winnableAmount);
+      winner = uint(keccak256(_result)) % _maxRange;
+      WinnerPicked(donors[winner], winnableAmount);
     }
   }
 
@@ -137,6 +157,7 @@ contract FundraiserRaffle is Ownable, usingOraclize {
   function generateRandomNum()
     public
     payable
+    checkComplete
     atStage(Stages.Complete)
     returns (bool)
   {

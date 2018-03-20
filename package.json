@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "rimraf ./build && truffle compile",
-    "lint": "solium -d ./contracts/"
+    "lint": "solium -d ./contracts/",
+    "start:blockchain": "yarn ganache-cli -t 100 -b 15 -d -m 'candy maple cake sugar pudding cream honey rich smooth crumble sweet treat'"
   }
 }

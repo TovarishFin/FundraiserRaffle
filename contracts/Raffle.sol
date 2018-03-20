@@ -5,7 +5,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./OraclizeAPI.sol";
 
 
-contract Raffle is Ownable, usingOraclize {
+contract FundraiserRaffle is Ownable, usingOraclize {
   using SafeMath for uint256;
   uint256 public fundraisedAmount = 0;
   uint256 public winnableAmount = 0;
@@ -48,16 +48,10 @@ contract Raffle is Ownable, usingOraclize {
     _;
   }
 
-  function Raffle(uint256 _fundraiserGoal)
+  function FundraiserRaffle(uint256 _fundraiserGoal)
     public
   {
     fundraiserGoal = _fundraiserGoal;
-  }
-
-  function enterStage(Stages _stage)
-    private
-  {
-    stage = _stage;
   }
 
   // do not allow anyone to send money to this contract without donate()
@@ -133,7 +127,7 @@ contract Raffle is Ownable, usingOraclize {
     } else {
       enterStage(Stages.Finished);
       uint256 _maxRange = donors.length;
-      randomWinner = uint(keccak256(_result));
+      randomWinner = uint(keccak256(_result)) % _maxRange;
       WinnerPicked(donors[randomWinner], winnableAmount);
     }
   }
@@ -151,11 +145,17 @@ contract Raffle is Ownable, usingOraclize {
     uint256 _randomByteCount = 4;
     uint256 _delay = 0;
     uint256 _callbackGas = 2e5;
-    bytes32 _queryId = oraclize_newRandomDSQuery(
+    oraclize_newRandomDSQuery(
       _delay,
       _randomByteCount,
       _callbackGas
     );
     return true;
+  }
+
+  function enterStage(Stages _stage)
+    private
+  {
+    stage = _stage;
   }
 }

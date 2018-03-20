@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/Cellar/node/9.7.1_1/bin/node /usr/local/bin/yarn solium -d ./contracts/
+  /usr/local/Cellar/node/9.7.1_1/bin/node /usr/local/bin/yarn lint
 
 PATH: 
   /Users/tovarishfin/google-cloud-sdk/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
@@ -1717,7 +1717,7 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c /Users/tovarishfin/dev/personal/raffle/node_modules/.bin/solium -d ./contracts/
+  Arguments: -c solium -d ./contracts/
   Directory: /Users/tovarishfin/dev/personal/raffle
   Output:
   

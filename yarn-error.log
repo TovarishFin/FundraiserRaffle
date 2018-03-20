@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/local/Cellar/node/9.7.1_1/bin/node /usr/local/bin/yarn truffle migrate --network rinkeby
+  /usr/local/Cellar/node/9.7.1_1/bin/node /usr/local/bin/yarn build:contracts
 
 PATH: 
   /Users/tovarishfin/google-cloud-sdk/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
@@ -4561,7 +4561,7 @@ Trace:
   Error: Command failed.
   Exit code: 1
   Command: sh
-  Arguments: -c /Users/tovarishfin/dev/personal/raffle/node_modules/.bin/truffle migrate --network rinkeby
+  Arguments: -c yarn run clean:contracts && truffle compile
   Directory: /Users/tovarishfin/dev/personal/raffle
   Output:
   

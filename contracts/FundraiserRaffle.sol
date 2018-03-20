@@ -5,13 +5,23 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./OraclizeAPI.sol";
 
 
-contract FundraiserRaffle is Ownable, usingOraclize {
+// RandomNumberGenerator interface
+contract RandNumGen {
+  function generateRandomNum()
+    public
+    returns (bool)
+  {}
+}
+
+
+contract FundraiserRaffle is Ownable {
   using SafeMath for uint256;
   uint256 public fundraisedAmount = 0;
   uint256 public winnableAmount = 0;
   uint256 public winner;
   uint256 public endDate;
   address public fundraiserAddress;
+  RandNumGen public randNumGen;
 
   address[] public donors;
 
@@ -61,6 +71,12 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     _;
   }
 
+  modifier onlyRandom() {
+    require(address(randNumGen) != address(0));
+    require(msg.sender == address(randNumGen));
+    _;
+  }
+
   // owner starts as msg.sender
   // ownership is transferred over to fundraiserAddress when startRaffle() called
   function FundraiserRaffle(
@@ -82,6 +98,20 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     payable
   {
     revert();
+  }
+
+  function setOracle(address _generatorAddress)
+    public
+    onlyOwner
+    atStage(Stages.PreStart)
+    returns (bool)
+  {
+    // ensure that address is a contract
+    uint256 _size;
+    assembly { _size := extcodesize(_generatorAddress) }
+    require(_size > 0);
+
+    randNumGen = RandNumGen(_generatorAddress);
   }
 
   // allows raffle to start
@@ -112,6 +142,30 @@ contract FundraiserRaffle is Ownable, usingOraclize {
     Donation(msg.sender, msg.value);
   }
 
+  function getWinner()
+    external
+    payable
+    checkComplete
+    atStage(Stages.Complete)
+    returns (bool)
+  {
+    require(msg.value == 2e5);
+    randNumGen.generateRandomNum();
+  }
+
+  function setWinner(string _randomWinner)
+    external
+    onlyRandom
+    atStage(Stages.Complete)
+    returns (bool)
+  {
+    enterStage(Stages.Finished);
+    uint256 _maxRange = donors.length - 1;
+    winner = uint(keccak256(_randomWinner)) % _maxRange;
+    WinnerPicked(donors[winner], winnableAmount);
+    return true;
+  }
+
   // winner can claim using this after fundraising has ended
   function claimWinnings()
     external
@@ -133,51 +187,6 @@ contract FundraiserRaffle is Ownable, usingOraclize {
   {
     owner.transfer(fundraisedAmount);
     FundraiserClaimed(owner, fundraisedAmount);
-    return true;
-  }
-
-  // callback function used to get random winner (uses oraclize)
-  function __callback(bytes32 _queryId, string _result, bytes _proof)
-    public
-    atStage(Stages.Complete)
-  {
-    require(msg.sender == oraclize_cbAddress());
-
-    // if 0 proof, verification failed...
-    if (oraclize_randomDS_proofVerify__returnCode(
-      _queryId,
-      _result,
-      _proof) != 0
-    ) {
-      revert();
-    } else {
-      enterStage(Stages.Finished);
-      uint256 _maxRange = donors.length - 1;
-      winner = uint(keccak256(_result)) % _maxRange;
-      WinnerPicked(donors[winner], winnableAmount);
-    }
-  }
-
-  // used only after fundraiser complete, anyone can call
-  // caller needs to pay for gas costs of generating random number
-  // the result is sent to __callback
-  function generateRandomNum()
-    public
-    payable
-    checkComplete
-    atStage(Stages.Complete)
-    returns (bool)
-  {
-    require(msg.value == 2e5);
-    oraclize_setProof(proofType_Ledger);
-    uint256 _randomByteCount = 4;
-    uint256 _delay = 0;
-    uint256 _callbackGas = 2e5;
-    oraclize_newRandomDSQuery(
-      _delay,
-      _randomByteCount,
-      _callbackGas
-    );
     return true;
   }
 

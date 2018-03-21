@@ -173,6 +173,7 @@ contract FundraiserRaffle is Ownable {
     returns (bool)
   {
     require(donors[winner] == msg.sender);
+    winnableAmount = 0;
     msg.sender.transfer(winnableAmount);
     WinnerClaimed(msg.sender, winnableAmount);
     return true;

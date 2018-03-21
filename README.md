@@ -14,6 +14,18 @@ A previously agreed upon ethereum address which a charity controls will be set i
 
 Donations will be made to the smart contract where in return for the donation, the donor will have a chance to win half of the donation. Donors only get one chance not matter how many times they donate.
 
+### Donation End
+
+An end date is given to the contract at the start. When this end date has occurred, no more donations can be made. At this point, anyone can get the winner by triggering a call to the `RandomNumberGenerator` contract. This contract uses oraclize to get secure, random number from outside of the ethereum blockchain. This random number is used to pick the raffle winner at random.
+
+### Winner claiming
+
+The winner chosen in the previous section is able to claim his/her winnings after donations have ended and the winner has been chosen by anyone calling the `getWinner` function. The winnable amount is set to 0 after the winnings have been claimed in order to prevent duplicate claims.
+
+### charity claiming
+
+The charity, same as winner, is able to claim after donations are over and anyone has called `getWinner`.
+
 ## TODO
 - [ ] implement donor index and donor index checking to facilitate 1 address = 1 entry
 - [ ] decide on minimum donation amount in order to prevent spam from different addresses for entries

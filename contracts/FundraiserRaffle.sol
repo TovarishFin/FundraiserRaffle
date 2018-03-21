@@ -2,13 +2,13 @@ pragma solidity 0.4.19;
 
 import "zeppelin-solidity/contracts/math/SafeMath.sol";
 import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./OraclizeAPI.sol";
 
 
 // RandomNumberGenerator interface
 contract RandNumGen {
   function generateRandomNum()
     public
+    payable
     returns (bool)
   {}
 }
@@ -33,6 +33,8 @@ contract FundraiserRaffle is Ownable {
   }
 
   Stages public stage = Stages.PreStart;
+
+  event FundraiserStarted();
 
   event Donation(
     address indexed from,
@@ -122,8 +124,10 @@ contract FundraiserRaffle is Ownable {
     atStage(Stages.PreStart)
     returns (bool)
   {
+    require(address(randNumGen) != address(0));
     enterStage(Stages.Active);
     transferOwnership(fundraiserAddress);
+    FundraiserStarted();
     return true;
   }
 
@@ -149,8 +153,8 @@ contract FundraiserRaffle is Ownable {
     atStage(Stages.Complete)
     returns (bool)
   {
-    require(msg.value == 2e5);
-    randNumGen.generateRandomNum();
+    require(msg.value >= 2e5);
+    randNumGen.generateRandomNum.value(msg.value)();
   }
 
   function setWinner(string _randomWinner)

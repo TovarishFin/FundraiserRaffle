@@ -12,7 +12,7 @@ contract Fundraiser {
 }
 
 
-contract RandomNumberOracle is usingOraclize {
+contract RandomNumberGenerator is usingOraclize {
   Fundraiser public fundraiser;
 
   modifier onlyFundraiser() {
@@ -21,7 +21,7 @@ contract RandomNumberOracle is usingOraclize {
   }
 
   // fundraiser contract set in constructor, cannot be changed later
-  function RandomNumberOracle(address _fundraiserAddress)
+  function RandomNumberGenerator(address _fundraiserAddress)
     public
   {
     require(_fundraiserAddress != address(0));
@@ -58,7 +58,7 @@ contract RandomNumberOracle is usingOraclize {
     onlyFundraiser
     returns (bool)
   {
-    require(msg.value == 2e5);
+    require(msg.value >= 2e5);
     oraclize_setProof(proofType_Ledger);
     uint256 _randomByteCount = 4;
     uint256 _delay = 0;

@@ -4,14 +4,9 @@ require('babel-register')
 
 module.exports = {
   networks: {
-    test: {
-      host: 'localhost',
-      port: 9545,
-      network_id: '*'
-    },
     dev: {
       host: 'localhost',
-      port: 9545,
+      port: 8545,
       network_id: '*'
     },
     ropsten: {

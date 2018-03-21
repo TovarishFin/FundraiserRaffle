@@ -64,6 +64,7 @@ module.exports = {
     "beforeEach": true,
     "chai": true,
     "console": true,
+    "contract": true,
     "cy": true,
     "Cypress": true,
     "describe": true,

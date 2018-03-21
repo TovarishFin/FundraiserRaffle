@@ -10,6 +10,10 @@ The idea is to enable fundraisers to take advantage of the enthusiasm of the cry
 
 A previously agreed upon ethereum address which a charity controls will be set in the smart contract before fundraising begins. This will not be able to be changed. The address will be confirmed to be valid through some form of social media post including the ethereum address from a social media account the charity controls.
 
+### Starting the Raffle
+
+Donations are not accepted until the owner of the contract moves the contract into `Active` stage. Once when this has happened donations can happen until the `endDate`.
+
 ### Donating
 
 Donations will be made to the smart contract where in return for the donation, the donor will have a chance to win half of the donation. Donors only get one chance not matter how many times they donate.
